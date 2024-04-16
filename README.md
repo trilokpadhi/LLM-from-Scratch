@@ -39,6 +39,11 @@ python generate.py
 ### Blogs
 - [The Annotated Transformer](https://nlp.seas.harvard.edu/annotated-transformer/)
 - [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)
+- [A visual deep dive into transformers architecture](https://francescopochetti.com/a-visual-deep-dive-into-the-transformers-architecture-turning-karpathys-masterclass-into-pictures/)
+- [The Transformer Family](https://lilianweng.github.io/lil-log/2020/04/07/the-transformer-family.html)
+- [Transformers from Scratch by Brandon Rohrer](https://e2eml.school/transformers)
+- [TRANSFORMERS FROM SCRATCH](https://peterbloem.nl/blog/transformers)[code](https://github.com/pbloem/former)[video](https://www.youtube.com/playlist?list=PLIXJ-Sacf8u60G1TwcznBmK6rEL3gmZmV)
+
 ### Papers
 - [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 - [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805)
@@ -48,6 +53,7 @@ python generate.py
 - [The Annotated Transformer]()
 - [The Illustrated Transformer]()
 - [GPT-3: Language Models are Few-Shot Learners]()
+- [GPT-practice](https://github.com/PetropoulakisPanagiotis/gpt-practice/tree/main)
 ### Courses
 - [Stanford CS224N: Natural Language Processing with Deep Learning](http://web.stanford.edu/class/cs224n/)
 - [Stanford CS231N: Convolutional Neural Networks for Visual Recognition](http://cs231n.stanford.edu/)
