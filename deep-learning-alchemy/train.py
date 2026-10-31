@@ -426,7 +426,13 @@ def train(config):
     num_cuda_devices = torch.cuda.device_count()
     torch_compile_enabled = num_cuda_devices == 1 and config.num_micro_batches == 1
     torch_compile_mode = config.torch_compile_mode if torch_compile_enabled else None
-    device = "cuda:0" if num_cuda_devices > 0 else "cpu"
+    if num_cuda_devices > 0:
+        device = "cuda:0"
+    elif torch.backends.mps.is_available():
+        # Local adaptation: use the Apple-silicon GPU instead of falling back to CPU.
+        device = "mps"
+    else:
+        device = "cpu"
 
     completed_model = checkpointer.load_completed_model_if_available(
         device=device,

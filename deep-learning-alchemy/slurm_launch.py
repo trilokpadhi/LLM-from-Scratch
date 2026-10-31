@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 
-from utils import USER_CONFIG, extract_import_statement, get_user
+from utils import REPO_ROOT, USER_CONFIG, extract_import_statement, get_user
 
 
 # ---------------------------------------------------------------------------
@@ -33,13 +33,23 @@ QUEUE_CONFIGS = {
     "jag": {"account": "nlp", "partition": "jag-standard"},
     "miso": {"account": "miso", "partition": "miso,miso-lo"},
     "aal": {"account": "aal", "partition": "aal"},
+    # GSU ARCTIC: the six L40S GPUs are all on node acidsgcn010. qGPU24 allows
+    # 1 day per job; use qGPU48 or qGPU120 for longer runs. account=None uses
+    # your default Slurm account.
+    "arctic": {
+        "account": None,
+        "partition": "qGPU24",
+        "gpu_request": "gres",
+        "gpu_type": "L40S",
+        "time": "1-00:00:00",
+    },
     # Example for another cluster:
     # "gpu": {"account": None, "partition": "gpu", "gpu_request": "gres"},
 }
 
 # Optional shell commands inserted before `uv run`, useful on clusters that need
 # `module load ...` or a site-specific environment setup command.
-ENV_SETUP_COMMANDS = ""
+ENV_SETUP_COMMANDS = f'source "{REPO_ROOT}/arctic/env.sh"'
 
 
 SLURM_TEMPLATE = """#!/bin/bash
@@ -51,7 +61,7 @@ SLURM_TEMPLATE = """#!/bin/bash
 {gpu_directive}
 #SBATCH --cpus-per-task={cpus}
 #SBATCH --mem={mem}G
-#SBATCH --time=72:00:00
+#SBATCH --time={time}
 #SBATCH --output={slurm_log_dir}/%j.out
 {dependency_directive}
 {exclude_directive}
@@ -101,7 +111,7 @@ SLURM_ARRAY_TEMPLATE = """#!/bin/bash
 {gpu_directive}
 #SBATCH --cpus-per-task={cpus}
 #SBATCH --mem={mem}G
-#SBATCH --time=72:00:00
+#SBATCH --time={time}
 #SBATCH --array=0-{array_max}{array_limit}
 #SBATCH --output={slurm_log_dir}/%A_%a.out
 {dependency_directive}
@@ -178,6 +188,8 @@ def queue_info(queue):
         queue_config.get("account"),
         queue_config.get("partition"),
         queue_config.get("gpu_request", "gpus-per-task"),
+        queue_config.get("gpu_type"),
+        queue_config.get("time", "72:00:00"),
     )
 
 
@@ -189,11 +201,12 @@ def partition_directive(partition):
     return f"#SBATCH --partition={partition}" if partition else ""
 
 
-def gpu_directive(gpus, gpu_request):
+def gpu_directive(gpus, gpu_request, gpu_type=None):
+    gpu_spec = f"{gpu_type}:{gpus}" if gpu_type else f"{gpus}"
     if gpu_request == "gpus-per-task":
-        return f"#SBATCH --gpus-per-task={gpus}"
+        return f"#SBATCH --gpus-per-task={gpu_spec}"
     if gpu_request == "gres":
-        return f"#SBATCH --gres=gpu:{gpus}"
+        return f"#SBATCH --gres=gpu:{gpu_spec}"
     if not gpu_request:
         return ""
     raise ValueError(f"Invalid gpu_request {gpu_request!r}. Use 'gpus-per-task' or 'gres'.")
@@ -263,13 +276,14 @@ def submit_script(script):
 def launch_job(function_call, queue, gpus, mem=None, cpus=16, dependency=None):
     script_name = get_script_name(function_call)
     import_statement = extract_import_statement()
-    account, partition, gpu_request = queue_info(queue)
+    account, partition, gpu_request, gpu_type, time = queue_info(queue)
     script = deepcopy(SLURM_TEMPLATE).format(
         import_statement=import_statement,
         function_call=function_call,
         account_directive=account_directive(account),
         partition_directive=partition_directive(partition),
-        gpu_directive=gpu_directive(gpus, gpu_request),
+        gpu_directive=gpu_directive(gpus, gpu_request, gpu_type),
+        time=time,
         gpus=gpus,
         mem=mem if mem is not None else 64 * gpus,
         cpus=cpus,
@@ -305,14 +319,15 @@ def launch_job_array(
 
     script_name = get_array_script_name(function_calls)
     import_statement = extract_import_statement()
-    account, partition, gpu_request = queue_info(queue)
+    account, partition, gpu_request, gpu_type, time = queue_info(queue)
     array_limit = f"%{max_concurrent}" if max_concurrent is not None else ""
     script = deepcopy(SLURM_ARRAY_TEMPLATE).format(
         import_statement=import_statement,
         function_calls_repr=pformat(function_calls, width=120),
         account_directive=account_directive(account),
         partition_directive=partition_directive(partition),
-        gpu_directive=gpu_directive(gpus, gpu_request),
+        gpu_directive=gpu_directive(gpus, gpu_request, gpu_type),
+        time=time,
         gpus=gpus,
         mem=mem if mem is not None else 64 * gpus,
         cpus=cpus,

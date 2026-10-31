@@ -1,5 +1,18 @@
 # CS312 Deep Learning Alchemy
 
+> **Note:** This folder is adapted from the
+> [Deep Learning Alchemy course code](https://github.com/deep-learning-alchemy/assignments)
+> (CS 312, branch `a1_release`) so I can work through the assignments on my own
+> setup, for fun and learning. I'm not affiliated with the course; credit for
+> the original code goes to the course staff. My changes:
+>
+> - Slurm launchers and setup scripts for the GSU ARCTIC cluster (L40S GPUs);
+>   see [arctic/README.md](arctic/README.md)
+> - Apple-silicon GPU (`mps`) fallback in `train.py` for local runs on a Mac
+> - My W&B username in `utils.py`
+>
+> The original course README follows.
+
 This repo trains small autoregressive language models on a prepared tokenized
 DCLM dataset using Modal. This README is the setup guide for a student starting
 from scratch.
